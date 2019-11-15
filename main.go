@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -34,9 +35,24 @@ type MangaData struct {
 	ChapterCount int
 }
 
+type ChapterData struct {
+	ChapterNo string // string as easier to use
+}
+
 type IndexTemplateData struct {
 	Username  string
 	MangaData []MangaData
+}
+
+type MangaPageTemplateData struct {
+	MangaData   MangaData
+	ChapterData []ChapterData
+}
+
+type ChapterReaderTemplateData struct {
+	MangaData    MangaData
+	ChapterData  ChapterData
+	PicFileNames []string
 }
 
 func setTokenCookie(w http.ResponseWriter, token string) {
@@ -69,7 +85,7 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 
 	if !ok || expectedPassword != credentials.Password {
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, "Wwong passowrd or username")
+		fmt.Fprintf(w, "Wrong passowrd or username")
 		return
 	}
 	claims := &Claims{
@@ -85,7 +101,6 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	setTokenCookie(w, tokenString)
-	//fmt.Fprintf(w, "login succeed. <a href=\"/\"> Go to homepage</a>")
 	http.Redirect(w, r, "/", http.StatusFound)
 }
 
@@ -141,8 +156,6 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return nil
 	})
 
-	fmt.Println(md)
-
 	_ = t.Execute(w, &IndexTemplateData{
 		Username:  username,
 		MangaData: md,
@@ -175,9 +188,100 @@ func StaticFileHandler(w http.ResponseWriter, r *http.Request) {
 	http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))).ServeHTTP(w, r)
 }
 
+func MangaPageHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := VerifyAndGetUsername(r)
+
+	if err != nil {
+		http.Redirect(w, r, "/loginpage", http.StatusFound)
+		return
+	}
+
+	values, _ := url.ParseQuery(r.URL.RawQuery)
+	value, ok := values["book"]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	mangaName := value[0]
+	// TODO: check if mangaName is valid
+
+	var cd []ChapterData
+	mangaRootDir := "static/manga/" + mangaName + "/"
+	filepath.Walk(mangaRootDir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() && path != mangaRootDir {
+			cd = append(cd, ChapterData{ChapterNo: info.Name()})
+			return filepath.SkipDir
+		}
+		return nil
+	})
+
+	md := MangaData{
+		MangaTitle:   mangaName,
+		ChapterCount: len(cd),
+	}
+
+	t, _ := template.ParseFiles("html/mangapage.html")
+	_ = t.Execute(w, &MangaPageTemplateData{
+		MangaData:   md,
+		ChapterData: cd,
+	})
+}
+
+func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := VerifyAndGetUsername(r)
+
+	if err != nil {
+		http.Redirect(w, r, "/loginpage", http.StatusFound)
+		return
+	}
+
+	values, _ := url.ParseQuery(r.URL.RawQuery)
+	value, ok := values["book"]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	chapterNos, ok := values["chapterno"]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	mangaName := value[0]
+	chapterNo := chapterNos[0]
+	// TODO: check if mangaName and chapter no is valid
+
+	var picFileNames []string
+	mangaChapterRootDir := "static/manga/" + mangaName + "/" + chapterNo + "/"
+	filepath.Walk(mangaChapterRootDir, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			picFileNames = append(picFileNames, info.Name())
+		}
+		return nil
+	})
+
+	crtd := ChapterReaderTemplateData{
+		MangaData:    MangaData{MangaTitle: mangaName},
+		ChapterData:  ChapterData{ChapterNo: chapterNo},
+		PicFileNames: picFileNames,
+	}
+
+	t, _ := template.ParseFiles("html/chapterreader.html")
+	_ = t.Execute(w, crtd)
+}
+
 func main() {
 	// Handlers for different paths
 	http.HandleFunc("/", IndexHandler)
+	http.HandleFunc("/mangapage", MangaPageHandler)
+	http.HandleFunc("/chapterreader", ChapterReaderHandler)
 	http.HandleFunc("/signinaction", SignInHandler)
 	http.HandleFunc("/loginpage", LogInPageHandler)
 	http.HandleFunc("/logout", LogOutHandler)
