@@ -12,7 +12,7 @@
     {{range .ChapterData}}
         <li>
             <a href="/chapterreader?book={{$title}}&chapterno={{.ChapterNo}}"> {{.ChapterNo}} </a>>
-
+            <img src="/static/manga/{{$title}}/{{.ChapterNo}}/{{.ChapterNo}}_000.jpg" width="150" height="225">
         </li>
     {{end}}
 </ul>
