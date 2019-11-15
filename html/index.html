@@ -10,5 +10,14 @@ Hello {{.Username}}!
 Welcome to fenxy's manga library.
 <br>
 <a href="/logout">Log out</a>
+<br> <br>
+<ul>
+    {{range .MangaData}}
+        <li>
+            <a href="">{{.MangaTitle}}</a>
+        </li>
+    {{end}}
+</ul>
+</ul>
 </body>
 </html>

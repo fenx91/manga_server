@@ -7,10 +7,13 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 var users = map[string]string{
-	"fenxy": "password1",
+	"fenxy": "fenxy",
 }
 
 var jwtSecret = []byte("my_secret_key")
@@ -25,8 +28,15 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-type TemplateData struct {
-	Username string
+type MangaData struct {
+	MangaTitle string
+	//  TODO() add: MangaId int  // Id in database
+	ChapterCount int
+}
+
+type IndexTemplateData struct {
+	Username  string
+	MangaData []MangaData
 }
 
 func setTokenCookie(w http.ResponseWriter, token string) {
@@ -118,8 +128,24 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	t, _ := template.ParseFiles("html/index.html")
 
-	_ = t.Execute(w, &TemplateData{
-		Username: username,
+	var md []MangaData
+	mangaRootDir := "static/manga/"
+	filepath.Walk(mangaRootDir, func(path string, info os.FileInfo, err error) error {
+		if info.IsDir() && path != mangaRootDir {
+			md = append(md, MangaData{
+				MangaTitle:   info.Name(),
+				ChapterCount: 0, // TODO() add logic if necessary
+			})
+			return filepath.SkipDir
+		}
+		return nil
+	})
+
+	fmt.Println(md)
+
+	_ = t.Execute(w, &IndexTemplateData{
+		Username:  username,
+		MangaData: md,
 	})
 }
 
@@ -134,11 +160,29 @@ func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Logout succeed")
 }
 
+func StaticFileHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := VerifyAndGetUsername(r)
+
+	if err != nil {
+		http.Redirect(w, r, "/loginpage", http.StatusFound)
+		return
+	}
+	// Reject requests to directory.
+	if strings.HasSuffix(r.URL.Path, "/") {
+		http.NotFound(w, r)
+		return
+	}
+	http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))).ServeHTTP(w, r)
+}
+
 func main() {
+	// Handlers for different paths
 	http.HandleFunc("/", IndexHandler)
 	http.HandleFunc("/signinaction", SignInHandler)
 	http.HandleFunc("/loginpage", LogInPageHandler)
 	http.HandleFunc("/logout", LogOutHandler)
-	fmt.Println("running server on :10001")
+	http.HandleFunc("/static/", StaticFileHandler)
+
+	fmt.Println("running server on localhost:10001")
 	log.Fatal(http.ListenAndServe(":10001", nil))
 }
