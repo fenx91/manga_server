@@ -1,4 +1,5 @@
 {{$title := .MangaData.MangaTitle}}
+{{$mangaId := .MangaData.MangaId}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,13 +9,9 @@
 <body>
 <h1>{{.MangaData.MangaTitle}}</h1>
 <p>Total {{.MangaData.ChapterCount}} chapters</p>
-<ul>
-    {{range .ChapterData}}
-        <li>
-            <a href="/chapterreader?book={{$title}}&chapterno={{.ChapterNo}}"> {{.ChapterNo}} </a>>
-            <img src="/static/manga/{{$title}}/{{.ChapterNo}}/{{.ChapterNo}}_000.jpg" width="150" height="225">
-        </li>
-    {{end}}
-</ul>
+{{range .ChapterData}}
+    <a href="/chapterreader?book={{$mangaId}}&chapterno={{.ChapterNo}}"> <img
+                src="/static/manga/{{$title}}/{{.ChapterNo}}/{{.ChapterNo}}_000.jpg" width="250" height="375"> </a>
+{{end}}
 </body>
 </html>

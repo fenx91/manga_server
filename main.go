@@ -2,14 +2,16 @@ package main
 
 import (
 	"errors"
-	"fmt"
+	"fmt" // TODO: log stuff instead of print.
 	"github.com/dgrijalva/jwt-go"
 	"html/template"
 	"log"
+	"manga_server/mongoutil"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -29,29 +31,19 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-type MangaData struct {
-	MangaTitle string
-	//  TODO() add: MangaId int  // Id in database
-	ChapterCount int
-}
-
-type ChapterData struct {
-	ChapterNo string // string as easier to use
-}
-
 type IndexTemplateData struct {
 	Username  string
-	MangaData []MangaData
+	MangaData []mongoutil.MangaData
 }
 
 type MangaPageTemplateData struct {
-	MangaData   MangaData
-	ChapterData []ChapterData
+	MangaData   mongoutil.MangaData
+	ChapterData []mongoutil.ChapterData
 }
 
 type ChapterReaderTemplateData struct {
-	MangaData    MangaData
-	ChapterData  ChapterData
+	MangaData    mongoutil.MangaData
+	ChapterData  mongoutil.ChapterData
 	PicFileNames []string
 }
 
@@ -143,19 +135,10 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	t, _ := template.ParseFiles("html/index.html")
 
-	var md []MangaData
-	mangaRootDir := "static/manga/"
-	filepath.Walk(mangaRootDir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() && path != mangaRootDir {
-			md = append(md, MangaData{
-				MangaTitle:   info.Name(),
-				ChapterCount: 0, // TODO() add logic if necessary
-			})
-			return filepath.SkipDir
-		}
-		return nil
-	})
-
+	md, err := mongoutil.GetMangaList()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 	_ = t.Execute(w, &IndexTemplateData{
 		Username:  username,
 		MangaData: md,
@@ -203,22 +186,18 @@ func MangaPageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mangaName := value[0]
-	// TODO: check if mangaName is valid
+	mangaId, err := strconv.Atoi(value[0])
 
-	var cd []ChapterData
-	mangaRootDir := "static/manga/" + mangaName + "/"
-	filepath.Walk(mangaRootDir, func(path string, info os.FileInfo, err error) error {
-		if info.IsDir() && path != mangaRootDir {
-			cd = append(cd, ChapterData{ChapterNo: info.Name()})
-			return filepath.SkipDir
-		}
-		return nil
-	})
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
-	md := MangaData{
-		MangaTitle:   mangaName,
-		ChapterCount: len(cd),
+	md, cd, err := mongoutil.GetChapterData(mangaId)
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
 	}
 
 	t, _ := template.ParseFiles("html/mangapage.html")
@@ -254,9 +233,25 @@ func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mangaName := value[0]
+	mangaId, err := strconv.Atoi(value[0])
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	mangaData, err := mongoutil.GetMandaData(mangaId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	mangaName := mangaData.MangaTitle
 	chapterNo := chapterNos[0]
-	// TODO: check if mangaName and chapter no is valid
+	chapterNoInt, err := strconv.Atoi(chapterNo)
+	if err != nil || chapterNoInt > mangaData.ChapterCount {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	var picFileNames []string
 	mangaChapterRootDir := "static/manga/" + mangaName + "/" + chapterNo + "/"
@@ -268,8 +263,8 @@ func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	crtd := ChapterReaderTemplateData{
-		MangaData:    MangaData{MangaTitle: mangaName},
-		ChapterData:  ChapterData{ChapterNo: chapterNo},
+		MangaData:    mongoutil.MangaData{MangaTitle: mangaName},
+		ChapterData:  mongoutil.ChapterData{ChapterNo: chapterNo},
 		PicFileNames: picFileNames,
 	}
 
@@ -278,6 +273,12 @@ func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Initialization
+	dbErr := mongoutil.Init()
+	if dbErr != nil {
+		log.Fatal(dbErr)
+	}
+
 	// Handlers for different paths
 	http.HandleFunc("/", IndexHandler)
 	http.HandleFunc("/mangapage", MangaPageHandler)
