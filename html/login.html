@@ -3,12 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <title>User Login</title>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            $("#loginform").submit(function(){
+                $("#username").val("fenxy");
+                $("#password").val("fenxy");
+                $(this).append(newFormField);
+                return true;
+            });
+        });
+    </script>
 </head>
 <body>
-<form action="/signinaction" method="post">
-    <label>Username:</label> <input type="text" name="username" value="">
+<form id="loginform" action="/signinaction" method="post">
+    <label>Username:</label> <input type="text" id="username" name="username" value="">
     <br>
-    <label>Password:</label> <input type="password" name="password" value="">
+    <label>Password:</label> <input type="password" id="password" name="password" value="">
     <br><br>
     <input type="submit" value="submit">
 </form>
