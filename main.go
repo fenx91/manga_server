@@ -288,6 +288,6 @@ func main() {
 	http.HandleFunc("/logout", LogOutHandler)
 	http.HandleFunc("/static/", StaticFileHandler)
 
-	fmt.Println("running server on localhost:10001")
-	log.Fatal(http.ListenAndServe(":10001", nil))
+	fmt.Println("running server on localhost:80")
+	log.Fatal(http.ListenAndServe(":80", nil))
 }

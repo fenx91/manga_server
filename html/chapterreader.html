@@ -5,10 +5,17 @@
 <head>
     <meta charset="UTF-8">
     <title>{{.MangaData.MangaTitle}} Chapter {{.ChapterData.ChapterNo}}</title>
+    <script src="https://cdn.jsdelivr.net/npm/lozad/dist/lozad.min.js"></script>
 </head>
 <body>
 {{range .PicFileNames}}
-    <img src="/static/manga/{{$title}}/{{$cn}}/{{.}}"> <br>
+    <img class="lozad" data-src="/static/manga/{{$title}}/{{$cn}}/{{.}}"> <br>
 {{end}}
+
+<script>
+    // Enable lazy loading images.
+    const observer = lozad();
+    observer.observe();
+</script>
 </body>
 </html>
