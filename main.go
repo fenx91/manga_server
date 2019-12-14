@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt" // TODO: log stuff instead of print.
 	"github.com/dgrijalva/jwt-go"
+	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"log"
 	"manga_server/mongoutil"
@@ -11,28 +12,27 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-var users = map[string]string{
-	"fenxy": "fenxy",
-}
-
-var jwtSecret = []byte("my_secret_key")
+var jwtSecret = []byte("my_secret_key_fenxy")
+var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 type Credentials struct {
 	Password string `json:"password"`
-	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 type Claims struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
+	Nickname string `json:"nickname"`
 	jwt.StandardClaims
 }
 
 type IndexTemplateData struct {
-	Username  string
+	Nickname  string
 	MangaData []mongoutil.MangaData
 }
 
@@ -61,45 +61,10 @@ func deleteTokenCookie(w http.ResponseWriter) {
 	})
 }
 
-func SignInHandler(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		fmt.Fprintf(w, "ParseForm() err: %v", err)
-		return
-	}
-	fmt.Println("entered signin handler")
-	credentials := &Credentials{
-		r.FormValue("password"),
-		r.FormValue("username"),
-	}
-	fmt.Println(credentials)
-
-	expectedPassword, ok := users[credentials.Username]
-
-	if !ok || expectedPassword != credentials.Password {
-		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprintf(w, "Wrong passowrd or username")
-		return
-	}
-	claims := &Claims{
-		Username:       credentials.Username,
-		StandardClaims: jwt.StandardClaims{},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(jwtSecret)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	setTokenCookie(w, tokenString)
-	http.Redirect(w, r, "/", http.StatusFound)
-}
-
-func VerifyAndGetUsername(r *http.Request) (Username string, err error) {
+func VerifyTokenAndGetUsername(r *http.Request) (UserEmail string, Nickname string, err error) {
 	c, err := r.Cookie("token")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	tokenString := c.Value
@@ -111,13 +76,13 @@ func VerifyAndGetUsername(r *http.Request) (Username string, err error) {
 		})
 
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	if token.Valid == false {
-		return "", errors.New("token not valid")
+		return "", "", errors.New("token not valid")
 	}
 
-	return claims.Username, nil
+	return claims.Email, claims.Nickname, nil
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -126,7 +91,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username, err := VerifyAndGetUsername(r)
+	_, nickname, err := VerifyTokenAndGetUsername(r)
 
 	if err != nil {
 		http.Redirect(w, r, "/loginpage", http.StatusFound)
@@ -140,7 +105,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	_ = t.Execute(w, &IndexTemplateData{
-		Username:  username,
+		Nickname:  nickname,
 		MangaData: md,
 	})
 }
@@ -151,13 +116,115 @@ func LogInPageHandler(w http.ResponseWriter, r *http.Request) {
 	_ = t.Execute(w, nil)
 }
 
+func SignInHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
+	fmt.Println("entered signin handler")
+	credentials := &Credentials{
+		Password: r.FormValue("password"),
+		Email:    r.FormValue("email"),
+	}
+	fmt.Println(credentials)
+	if len(credentials.Email) > 254 || !rxEmail.MatchString(credentials.Email) {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "%s is not a valid email address", credentials.Email)
+		return
+	}
+
+	// Check password match
+	expectedHashedPassword, err := mongoutil.GetExpectedPassword(credentials.Email)
+	err2 := bcrypt.CompareHashAndPassword([]byte(expectedHashedPassword), []byte(credentials.Password))
+	if err != nil || err2 != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprintf(w, "Wrong passowrd or user email")
+		return
+	}
+
+	// Password matched. Creating JWT.
+	ud, err := mongoutil.GetUserRegistrationData(credentials.Email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	claims := &Claims{
+		Email:          credentials.Email,
+		Nickname:       ud.Nickname,
+		StandardClaims: jwt.StandardClaims{},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtSecret)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	setTokenCookie(w, tokenString)
+	http.Redirect(w, r, "/", http.StatusFound)
+}
+
+func SignUpPageHandler(w http.ResponseWriter, r *http.Request) {
+	t, _ := template.ParseFiles("html/register.html")
+
+	_ = t.Execute(w, nil)
+}
+
+func SignUpActionHandler(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		fmt.Fprintf(w, "ParseForm() err: %v", err)
+		return
+	}
+	fmt.Println("entered signup handler")
+	ud := &mongoutil.UserRegistrationData{
+		Email:    r.FormValue("email"),
+		Nickname: r.FormValue("nickname"),
+		Password: r.FormValue("password"),
+	}
+	fmt.Println(ud)
+	// Check email address is valid
+	if len(ud.Email) > 254 || !rxEmail.MatchString(ud.Email) {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "%s is not a valid email address", ud.Email)
+		return
+	}
+	// Check if user registered
+	flag, err := mongoutil.DoesUserExist(ud.Email)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if flag {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "User %s has already registered.", ud.Email)
+		return
+	}
+
+	// Hash and store password
+	bytes, err := bcrypt.GenerateFromPassword([]byte(ud.Password), 6)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	ud.Password = string(bytes)
+	err = mongoutil.SaveUserRegistrationInfo(*ud)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprint(w, "Register succeeded.")
+}
+
 func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 	deleteTokenCookie(w)
 	fmt.Fprintf(w, "Logout succeed")
 }
 
 func StaticFileHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := VerifyAndGetUsername(r)
+	_, _, err := VerifyTokenAndGetUsername(r)
 
 	if err != nil {
 		http.Redirect(w, r, "/loginpage", http.StatusFound)
@@ -172,7 +239,7 @@ func StaticFileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func MangaPageHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := VerifyAndGetUsername(r)
+	_, _, err := VerifyTokenAndGetUsername(r)
 
 	if err != nil {
 		http.Redirect(w, r, "/loginpage", http.StatusFound)
@@ -208,7 +275,7 @@ func MangaPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := VerifyAndGetUsername(r)
+	_, _, err := VerifyTokenAndGetUsername(r)
 
 	if err != nil {
 		http.Redirect(w, r, "/loginpage", http.StatusFound)
@@ -285,6 +352,8 @@ func main() {
 	http.HandleFunc("/chapterreader", ChapterReaderHandler)
 	http.HandleFunc("/signinaction", SignInHandler)
 	http.HandleFunc("/loginpage", LogInPageHandler)
+	http.HandleFunc("/signuppage", SignUpPageHandler)
+	http.HandleFunc("/signupaction", SignUpActionHandler)
 	http.HandleFunc("/logout", LogOutHandler)
 	http.HandleFunc("/static/", StaticFileHandler)
 

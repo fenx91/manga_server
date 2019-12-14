@@ -12,9 +12,11 @@ const dbUsername = "fenxy"
 const dbPassword = "4REQlkmb"
 const dbName = "manga_server"
 const collectionMangas = "mangas"
+const collectionUsers = "users"
 
 var client *mongo.Client
 var mangasCollection *mongo.Collection
+var userCollection *mongo.Collection
 
 func Init() (err error) {
 	// Set client options
@@ -35,6 +37,7 @@ func Init() (err error) {
 	}
 
 	mangasCollection = client.Database(dbName).Collection(collectionMangas)
+	userCollection = client.Database(dbName).Collection(collectionUsers)
 	fmt.Println("Connected to MongoDB as fenxy!")
 	return nil
 }
@@ -72,4 +75,40 @@ func GetChapterData(mangaId int) (md MangaData, cd []ChapterData, err error) {
 		cd = append(cd, ChapterData{ChapterNo: fmt.Sprintf("%02d", i)})
 	}
 	return md, cd, nil
+}
+
+func SaveUserRegistrationInfo(ud UserRegistrationData) (err error) {
+	_, err = userCollection.InsertOne(context.TODO(), ud)
+	return err
+}
+
+func GetUserRegistrationData(email string) (ud UserRegistrationData, err error) {
+	err = userCollection.FindOne(context.TODO(), bson.D{{"email", email}}).Decode(&ud)
+	if err != nil {
+		return UserRegistrationData{}, err
+	} else {
+		return ud, nil
+	}
+}
+
+func DoesUserExist(email string) (flag bool, err error) {
+	_, err = GetUserRegistrationData(email)
+	if err != nil {
+		if err == mongo.ErrNoDocuments { // Not found user in db
+			return false, nil
+		} else { // Some other error happened
+			return false, err
+		}
+	} else {
+		return true, nil // Found user in db
+	}
+}
+
+func GetExpectedPassword(email string) (password string, err error) {
+	ud, err := GetUserRegistrationData(email)
+	if err != nil {
+		return "", err
+	} else {
+		return ud.Password, nil
+	}
 }

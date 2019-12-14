@@ -12,3 +12,9 @@ type MangaData struct {
 type ChapterData struct {
 	ChapterNo string // string as easier to use
 }
+
+type UserRegistrationData struct {
+	Email    string
+	Nickname string
+	Password string
+}
