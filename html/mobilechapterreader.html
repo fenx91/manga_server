@@ -7,7 +7,7 @@
     <title>{{.MangaData.MangaTitle}} Chapter {{.ChapterData.ChapterNo}}</title>
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
-<body>
+<body style="margin: 0">
 <div id="app" v-on:click="nextpage">
     <canvas id="myCanvas" v-bind:width="canvasWidth()" v-bind:height="canvasHeight()"></canvas>
 </div>
@@ -28,12 +28,14 @@
                 mleft = 0
                 mtop = 0
                 if (this.width / this.height > window.innerWidth / window.innerHeight) {
-                    mWidth = window.innerWidth * 0.95
+                    mWidth = window.innerWidth
                     mHeight = window.innerWidth * (this.height / this.width)
                     mtop = (window.innerHeight - mHeight) / 2
+                    mleft = (window.innerWidth - mWidth) / 2
                 } else {
-                    mHeight = window.innerHeight * 0.95
+                    mHeight = window.innerHeight
                     mWidth = window.innerHeight * (this.width / this.height)
+                    mleft = (window.innerWidth - mWidth) / 2
                     mleft = (window.innerWidth - mWidth) / 2
                 }
                 var c = document.getElementById("myCanvas");
