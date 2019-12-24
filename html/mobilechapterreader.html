@@ -1,0 +1,71 @@
+{{$title := .MangaData.MangaTitle}}
+{{$cn := .ChapterData.ChapterNo}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{.MangaData.MangaTitle}} Chapter {{.ChapterData.ChapterNo}}</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+<div id="app" v-on:click="nextpage">
+    <canvas id="myCanvas" v-bind:width="canvasWidth()" v-bind:height="canvasHeight()"></canvas>
+</div>
+<script>
+    var app= new Vue({
+        delimiters: ['[[', ']]'],
+        el:'#app',
+        data:{
+            name: "123",
+            pageIndex: -1,
+            filenames: {{.PicFileNames}},
+            imgEle: new Image(),
+        },
+        created: function () {
+            this.imgEle.onload = function () {
+                mWidth = this.width
+                mHeight = this.height
+                mleft = 0
+                mtop = 0
+                if (this.width / this.height > window.innerWidth / window.innerHeight) {
+                    mWidth = window.innerWidth * 0.95
+                    mHeight = window.innerWidth * (this.height / this.width)
+                    mtop = (window.innerHeight - mHeight) / 2
+                } else {
+                    mHeight = window.innerHeight * 0.95
+                    mWidth = window.innerHeight * (this.width / this.height)
+                    mleft = (window.innerWidth - mWidth) / 2
+                }
+                var c = document.getElementById("myCanvas");
+                var ctx = c.getContext("2d");
+                ctx.clearRect(0, 0, c.width, c.height);
+                ctx.drawImage(this, mleft, mtop, mWidth, mHeight);
+            }
+        },
+        mounted: function (){
+            this.pageIndex = 0;
+        },
+        watch: {
+          pageIndex: function(val) {
+              this.imgEle.src = "/static/manga/{{$title}}/{{$cn}}/" + this.filenames[this.pageIndex]
+          }
+        },
+        methods:{
+            nextpage: function (event) {
+                if (event && event.clientX < window.innerWidth / 2) {
+                    if (this.pageIndex > 0) this.pageIndex--;
+                } else {
+                    if (this.pageIndex < this.filenames.length - 1)this.pageIndex++;
+                }
+            },
+            canvasWidth: function () {
+                return window.innerWidth + 'px'
+            },
+            canvasHeight: function () {
+                return window.innerHeight + 'px'
+            },
+        }
+    })
+</script>
+</body>
+</html>

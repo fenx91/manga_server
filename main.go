@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt" // TODO: log stuff instead of print.
 	"github.com/dgrijalva/jwt-go"
+	"github.com/mssola/user_agent"
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"log"
@@ -275,6 +276,10 @@ func MangaPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
+	if user_agent.New(r.UserAgent()).Mobile() {
+		http.Redirect(w, r, "/m"+r.URL.String(), http.StatusFound)
+	}
+
 	_, _, err := VerifyTokenAndGetUsername(r)
 
 	if err != nil {
@@ -339,6 +344,71 @@ func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
 	_ = t.Execute(w, crtd)
 }
 
+func MobileChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
+	_, _, err := VerifyTokenAndGetUsername(r)
+
+	if err != nil {
+		http.Redirect(w, r, "/loginpage", http.StatusFound)
+		return
+	}
+
+	values, _ := url.ParseQuery(r.URL.RawQuery)
+	value, ok := values["book"]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	chapterNos, ok := values["chapterno"]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	mangaId, err := strconv.Atoi(value[0])
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	mangaData, err := mongoutil.GetMandaData(mangaId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	mangaName := mangaData.MangaTitle
+	chapterNo := chapterNos[0]
+	chapterNoInt, err := strconv.Atoi(chapterNo)
+	if err != nil || chapterNoInt > mangaData.ChapterCount {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	var picFileNames []string
+	mangaChapterRootDir := "static/manga/" + mangaName + "/" + chapterNo + "/"
+	filepath.Walk(mangaChapterRootDir, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() {
+			picFileNames = append(picFileNames, info.Name())
+		}
+		return nil
+	})
+
+	crtd := ChapterReaderTemplateData{
+		MangaData:    mongoutil.MangaData{MangaTitle: mangaName},
+		ChapterData:  mongoutil.ChapterData{ChapterNo: chapterNo},
+		PicFileNames: picFileNames,
+	}
+
+	t, _ := template.ParseFiles("html/mobilechapterreader.html")
+	_ = t.Execute(w, crtd)
+}
+
 func main() {
 	// Initialization
 	dbErr := mongoutil.Init()
@@ -350,6 +420,7 @@ func main() {
 	http.HandleFunc("/", IndexHandler)
 	http.HandleFunc("/mangapage", MangaPageHandler)
 	http.HandleFunc("/chapterreader", ChapterReaderHandler)
+	http.HandleFunc("/m/chapterreader", MobileChapterReaderHandler)
 	http.HandleFunc("/signinaction", SignInHandler)
 	http.HandleFunc("/loginpage", LogInPageHandler)
 	http.HandleFunc("/signuppage", SignUpPageHandler)
