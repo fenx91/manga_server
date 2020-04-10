@@ -8,8 +8,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const dbUsername = "fenxy"
-const dbPassword = "4REQlkmb"
 const dbName = "manga_server"
 const collectionMangas = "mangas"
 const collectionUsers = "users"
@@ -18,7 +16,7 @@ var client *mongo.Client
 var mangasCollection *mongo.Collection
 var userCollection *mongo.Collection
 
-func Init() (err error) {
+func Init(dbUsername, dbPassword string) (err error) {
 	// Set client options
 	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017").SetAuth(options.Credential{Username: dbUsername, Password: dbPassword})
 
