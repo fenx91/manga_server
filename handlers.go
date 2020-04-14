@@ -6,6 +6,7 @@ import (
 	"github.com/mssola/user_agent"
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
+	"log"
 	"manga_server/jwtutil"
 	"manga_server/mongoutil"
 	"net/http"
@@ -54,6 +55,7 @@ func deleteTokenCookie(w http.ResponseWriter) {
 	})
 }
 
+// Deprecated
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/" {
 		w.WriteHeader(http.StatusNotFound)
@@ -185,19 +187,22 @@ func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Logout succeed")
 }
 
-func StaticFileHandler(w http.ResponseWriter, r *http.Request) {
-	_, _, err := jwtutil.VerifyTokenAndGetUsername(r)
+func GetStaticFileHandler(path string, dir string, allowRoot bool) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("entered handler" + path)
+		// Reject requests to directory if "allowRoot" is set to false.
+		if !allowRoot && strings.HasSuffix(r.URL.Path, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		http.StripPrefix(path, http.FileServer(http.Dir(dir))).ServeHTTP(w, r)
+	}
+}
 
-	if err != nil {
-		http.Redirect(w, r, "/loginpage", http.StatusFound)
-		return
-	}
-	// Reject requests to directory.
-	if strings.HasSuffix(r.URL.Path, "/") {
-		http.NotFound(w, r)
-		return
-	}
-	http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))).ServeHTTP(w, r)
+func RootHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("entered handler / with path:" + r.URL.Path)
+	http.StripPrefix(r.URL.Path, http.FileServer(http.Dir("./mangaserver_frontend/dist"))).
+		ServeHTTP(w, r)
 }
 
 func MangaPageHandler(w http.ResponseWriter, r *http.Request) {
@@ -370,17 +375,52 @@ func MobileChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
 	_ = t.Execute(w, crtd)
 }
 
-func MangaListHandler(w http.ResponseWriter, r *http.Request) {
+func ApiMangaListHandler(w http.ResponseWriter, r *http.Request) {
 	mangaDataList, err := mongoutil.GetMangaList()
 	if err != nil {
 		fmt.Println("get manga list failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	js, err := json.Marshal(mangaDataList)
+	type ApiMangaList struct {
+		MangaDataList []mongoutil.MangaData
+	}
+	mangalist := ApiMangaList{MangaDataList: mangaDataList}
+	js, err := json.Marshal(mangalist)
 	if err != nil {
 		fmt.Println("js marshal manga list failed")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+func ApiMangaInfoHandler(w http.ResponseWriter, r *http.Request) {
+	values, _ := url.ParseQuery(r.URL.RawQuery)
+	value, ok := values["mangaid"]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	mangaId, err := strconv.Atoi(value[0])
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	mangaData, err := mongoutil.GetMandaData(mangaId)
+
+	if err != nil {
+		log.Println("failed to get manga info for " + string(mangaId) + " in mongodb.")
+		http.NotFound(w, r)
+		return
+	}
+
+	js, err := json.Marshal(mangaData)
+	if err != nil {
+		fmt.Println("js marshal manga info failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

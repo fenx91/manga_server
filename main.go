@@ -27,8 +27,10 @@ func main() {
 	}
 
 	// Handlers for different paths
-	http.HandleFunc("/", IndexHandler)
-	http.HandleFunc("/mangapage", MangaPageHandler)
+	http.HandleFunc("/", RootHandler) // GetStaticFileHandler("/", "./mangaserver_frontend/dist", true))
+	http.HandleFunc("/main.js", GetStaticFileHandler("/", "./mangaserver_frontend/dist", false))
+	//http.HandleFunc("/mangapage/", GetStaticFileHandler("/mangapage/", "./mangaserver_frontend/dist", true))
+	//http.HandleFunc("/mangapage", MangaPageHandler)
 	http.HandleFunc("/chapterreader", ChapterReaderHandler)
 	http.HandleFunc("/m/chapterreader", MobileChapterReaderHandler)
 	http.HandleFunc("/signinaction", SignInHandler)
@@ -36,8 +38,10 @@ func main() {
 	http.HandleFunc("/signuppage", SignUpPageHandler)
 	http.HandleFunc("/signupaction", SignUpActionHandler)
 	http.HandleFunc("/logout", LogOutHandler)
-	http.HandleFunc("/static/", StaticFileHandler)
-	http.HandleFunc("/api/mangalist", MangaListHandler)
+	http.HandleFunc("/static/", GetStaticFileHandler("/static/", "./static", false))
+	http.HandleFunc("/images/", GetStaticFileHandler("/images/", "./mangaserver_frontend/images", false))
+	http.HandleFunc("/api/mangalist", ApiMangaListHandler)
+	http.HandleFunc("/api/mangainfo", ApiMangaInfoHandler)
 
 	fmt.Println("running server on localhost:80")
 	log.Fatal(http.ListenAndServe(":80", nil))
