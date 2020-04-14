@@ -1,4 +1,16 @@
+.content-panel {
+    background-color: rgb(255, 255, 255);
+    border-style: solid;
+    border-color: rgb(78, 40, 122);
+    border-width: 1px;
+    margin: 25px 20%;
+    padding: 50px 50px;
+}
+
+.manga-desc-sec-div {
+    margin-bottom: 60px;
+}
+
 .chapter-cover-list {
-    margin-left: 20%;
-    margin-right: 20%;
+    margin-top: 70px;
 }

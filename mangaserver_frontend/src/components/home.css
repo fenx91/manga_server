@@ -1,20 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 .manga-cover-list {
-    margin-right: 20%;
-    margin-left: 20%;
-    height: auto;
+    background-color: rgb(255, 255, 255);
+    border-style: solid;
+    border-color: rgb(78, 40, 122);
+    border-width: 1px;
+    margin: 25px 20%;
+    padding: 25px 50px 50px 50px;
 }
 
 .section-text {
     font-family: 'Nanum Brush Script', cursive;
     font-size: 4rem;
-    margin: 10px 0;
     color: rgb(78, 40, 122);
+    margin-bottom: 30px;
 }

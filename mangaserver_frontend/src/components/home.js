@@ -18,7 +18,7 @@ class Home extends Component {
         const data = json.MangaDataList.map(mangadata => {
           return {
             key: mangadata.MangaId,
-            imgsrc: "/static/manga/" + mangadata.MangaTitle + "/01/01_000.jpg",
+            imgsrc: "/static/manga/" + mangadata.MangaTitle + "/feature_img.jpg",
             title: mangadata.MangaTitle,
             link: "/mangapage/" + mangadata.MangaId,
           }
@@ -35,7 +35,7 @@ class Home extends Component {
         <div> <Topbar/> </div>
         <div className="manga-cover-list">
            <div className="section-text"><p>All Mangas</p></div>
-           <IcwtList icwtlist={this.state.icwt}/>
+           <IcwtList icwtlist={this.state.icwt} imgheight="285px" imgwidth="435px" imgspace="35px"/>
         </div>
       </div>
     );

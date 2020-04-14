@@ -9,8 +9,11 @@
 }
 
 .imagecover {
-    width: 200px;
-    height: 300px;
+    border-radius: 10px;
+    object-fit: cover;
+    border-style: solid;
+    border-width: 1px;
+    border-color: rgb(253, 249, 255);
 }
 
 .titlediv {

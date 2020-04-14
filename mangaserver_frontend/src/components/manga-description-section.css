@@ -1,0 +1,35 @@
+@import url('https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap');
+
+.manga-desc-sec {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.feature-img {
+    width:500px;
+    height: 333px;
+    object-fit: cover;
+    border: solid 1px rgb(253, 249, 255);
+    border-radius: 10px;
+}
+
+.desc-sec {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-family: 'Kosugi Maru', sans-serif;
+    color: rgb(78, 40, 122);
+    margin-left: 60px;
+    margin-right:auto;
+    margin-top: 15px;
+}
+
+.title-text {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.desc-text {
+    margin-top: 15px;
+    font-size: 1.3rem;
+}
