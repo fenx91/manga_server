@@ -403,9 +403,7 @@ func ApiMangaInfoHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-
 	mangaId, err := strconv.Atoi(value[0])
-
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
