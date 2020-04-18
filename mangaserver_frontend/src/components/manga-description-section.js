@@ -18,13 +18,14 @@ class MangaDescriptionSection extends React.Component {
                     className="desc-sec"
                     style={{
                         marginLeft: this.props.spacebetween + 'px',
+                        marginRight: this.props.spacebetween + 'px',
                         marginTop: this.props.spacebetween * 0.5 + 'px',
                     }}
                 >
                     <p
                         className="title-text"
                         style={{
-                            fontSize: this.props.imgwidth / 10 + 'px',
+                            fontSize: this.props.imgwidth / 15 + 'px',
                         }}
                     > {this.props.title}</p>
                     <p className="desc-text"> {this.props.desc} </p>
