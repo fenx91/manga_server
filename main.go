@@ -11,9 +11,10 @@ import (
 
 func main() {
 	// Get cmdline flags.
-	jwtSecret := flag.String("jwtSecret", "default", "Secret used in JWT token.")
 	dbUsername := flag.String("dbUsername", "default", "Database username.")
 	dbPassword := flag.String("dbPassword", "default", "Database password.")
+	// jwt secret not being used right now due to the disabling of login/signup functionality.
+	jwtSecret := flag.String("jwtSecret", "default", "Secret used in JWT token.")
 	flag.Parse()
 	if *jwtSecret == "default" || *dbUsername == "default" || *dbPassword == "default" {
 		log.Fatal("Did you set cmd line flags?")
@@ -27,17 +28,8 @@ func main() {
 	}
 
 	// Handlers for different paths
-	http.HandleFunc("/", RootHandler) // GetStaticFileHandler("/", "./mangaserver_frontend/dist", true))
+	http.HandleFunc("/", RootHandler)
 	http.HandleFunc("/main.js", GetStaticFileHandler("/", "./mangaserver_frontend/dist", false))
-	//http.HandleFunc("/mangapage/", GetStaticFileHandler("/mangapage/", "./mangaserver_frontend/dist", true))
-	//http.HandleFunc("/mangapage", MangaPageHandler)
-	http.HandleFunc("/chapterreader", ChapterReaderHandler)
-	http.HandleFunc("/m/chapterreader", MobileChapterReaderHandler)
-	http.HandleFunc("/signinaction", SignInHandler)
-	http.HandleFunc("/loginpage", LogInPageHandler)
-	http.HandleFunc("/signuppage", SignUpPageHandler)
-	http.HandleFunc("/signupaction", SignUpActionHandler)
-	http.HandleFunc("/logout", LogOutHandler)
 	http.HandleFunc("/static/", GetStaticFileHandler("/static/", "./static", false))
 	http.HandleFunc("/images/", GetStaticFileHandler("/images/", "./mangaserver_frontend/images", false))
 	http.HandleFunc("/api/mangalist", ApiMangaListHandler)
