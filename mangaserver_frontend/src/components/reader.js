@@ -27,6 +27,9 @@ class Reader extends React.Component {
             totalChapter: 0,
             enableChaptersList: false,
             enableToolBar: false,
+            lImgLoaded: false,
+            rImgLoaded: false,
+            loadingText: "",
         }
         // reader stats.
         this.mangaTitle = "";
@@ -39,11 +42,43 @@ class Reader extends React.Component {
         this.dataReady = false;
         // timer that handles the timeout to disbale toolbar
         this.disableToolBarTimer = null;
+        this.loadingTextTimer = null;
+        this.startLoadingTextTimer = null;
+        this.loadingTextPointNum = 0;
+        // image objs
+        this.leftImage = new Image();
+        this.rightImage= new Image();
         // indicates whether img loading has finished.
         this.lImgLoaded = false;
         this.rImgLoaded = false;
         // constants
         this.timeToDisableToolBar = 2000;  // ms
+    }
+    // Start showing 'loading' after some amount of time after starting loading new imgs.
+    startLoadingTimer() {
+        if (this.startLoadingTextTimer) {
+            window.clearTimeout(this.startLoadingTextTimer);
+            this.startLoadingTextTimer = null;
+        }
+        this.startLoadingTextTimer = window.setTimeout(function(reader) {
+            return function() {
+                reader.triggerLoadingTextTimer();
+            }
+        }(this), 200)
+    }
+
+    triggerLoadingTextTimer() {
+        this.loadingTextTimer = window.setTimeout(function(reader) {
+            return function() {
+                reader.loadingTextPointNum = (reader.loadingTextPointNum + 1) % 4;
+                let loadingText = "LOADING";
+                for (let i = 0; i < reader.loadingTextPointNum; ++i) loadingText += ".";
+                reader.setState({
+                    loadingText: loadingText,
+                });
+                reader.triggerLoadingTextTimer();
+            }
+        }(this), 500);
     }
 
     init() {
@@ -152,61 +187,96 @@ class Reader extends React.Component {
         });
         // Load the left side pic if needed.
         const rsrc = this.getRightImageSrc();
-        console.log("rpic src: " + rsrc);
         if (rsrc) {
             this.rImgLoaded = false;
-            const rPicImg = new Image();
+            this.setState({
+                rImgLoaded: false,
+            });
+            const rPicImg = this.rightImage;
             rPicImg.onload = (function(reader){
                 return function() {
+                    reader.rImgLoaded = true;
                     reader.setState({
+                        rImgLoaded: true,
                         r_imgsrc: this.src,
                         rpic_wh_ratio: this.width / this.height,
                     });
-                    reader.rImgLoaded = true;
                     if (reader.rImgLoaded && reader.lImgLoaded) {
+                        if (this.startLoadingTextTimer) {
+                            window.clearTimeout(this.startLoadingTextTimer);
+                            this.startLoadingTextTimer = null;
+                        }
+                        reader.setState({
+                            loadingText: "",
+                        });
+                        if (reader.loadingTextTimer) {
+                            window.clearTimeout(reader.loadingTextTimer);
+                            reader.loadingTextTimer = null;
+                        }
                         reader.updateDimensions();
                     }
                 };
             })(this);
+            if (!this.loadingTextTimer) this.triggerLoadingTextTimer();
             rPicImg.src = rsrc;
+            this.setState({
+                r_imgsrc: rsrc,
+            });
         } else {
             this.rImgLoaded = true;
             this.setState({
                 r_imgsrc: "",
+                rImgLoaded: true,
             })
         }
         // Load the left side pic if needed.
         const lsrc = this.getLeftImageSrc();
-        console.log("lpic src: " + lsrc);
         if (lsrc) {
             this.lImgLoaded = false;
-            const lPicImg = new Image();        
+            this.setState({
+                lImgLoaded: false,
+            });
+            const lPicImg = this.leftImage;        
             lPicImg.onload = (function(reader){
                 return function() {
+                    reader.lImgLoaded = true;
                     reader.setState({
+                        lImgLoaded: true,
                         l_imgsrc: this.src,
                         lpic_wh_ratio: this.width / this.height,
                     });
-                    reader.lImgLoaded = true;
                     if (reader.rImgLoaded && reader.lImgLoaded) {
+                        if (this.startLoadingTextTimer) {
+                            window.clearTimeout(this.startLoadingTextTimer);
+                            this.startLoadingTextTimer = null;
+                        }
+                        reader.setState({
+                            loadingText: "",
+                        });
+                        if (reader.loadingTextTimer) {
+                            window.clearTimeout(reader.loadingTextTimer);
+                            reader.loadingTextTimer = null;
+                        }
                         reader.updateDimensions();
                     }
                 };
             })(this);
-            lPicImg.src = lsrc;   
+            if (!this.loadingTextTimer) this.triggerLoadingTextTimer();
+            lPicImg.src = lsrc;
+            this.setState({
+                l_imgsrc: lsrc,
+            });
         } else {
             this.lImgLoaded = true;
             this.setState({
+                lImgLoaded: true,
                 l_imgsrc: "",
             })
         }          
     }
 
     componentDidMount() {
-        this.setState({
-            w: window.innerWidth,
-            h: window.innerHeight,
-        });
+        this.updateDimensions();
         this.currentChapter = parseInt(this.props.match.params.chapterno);
         this.mangaId = parseInt(this.props.match.params.mangaid);
         fetch(`/api/chapterpagecount?mangaid=${this.mangaId}`)
@@ -214,7 +284,6 @@ class Reader extends React.Component {
         .then(json => {
             this.mangaInfoJson = json;
             this.init();
-
             if (this.dataReady) {
                 this.setState({
                     totalChapter: this.totalChapter,
@@ -380,6 +449,7 @@ class Reader extends React.Component {
                         top:this.state.l_top + "px",
                         left:this.state.l_left + "px",
                         opacity: this.state.l_imgsrc ? "1" : "0",
+                        display: this.state.lImgLoaded ? "" : "none",
                     }}
                 />
                 <img
@@ -392,8 +462,38 @@ class Reader extends React.Component {
                         top: this.state.r_top + "px",
                         left: this.state.r_left + "px",
                         opacity: this.state.r_imgsrc ? "1" : "0",
+                        display: this.state.rImgLoaded ? "" : "none",
                     }}
                 />
+                <div
+                    className="loading-text"
+                    style={{
+                        width: this.state.l_w + "px",
+                        height: this.state.l_h + "px",
+                        position: "absolute",
+                        top:this.state.l_top + "px",
+                        left:this.state.l_left + "px",
+                        padding: (this.state.l_w / 2 - 80) + "px",
+                        display: this.state.l_imgsrc && !this.state.lImgLoaded ? "" : "none",
+                    }}
+                >
+                    <p>{this.state.loadingText}</p>
+                </div>
+                <div
+                    className="loading-text"
+                    style={{
+                        width: this.state.r_w + "px",
+                        height: this.state.r_h + "px",
+                        position: "absolute",
+                        top: this.state.r_top + "px",
+                        left: this.state.r_left + "px",
+                        padding: (this.state.l_w / 2 - 80) + "px",
+                        display: this.state.r_imgsrc && !this.state.rImgLoaded ? "" : "none",
+                    }}
+                    
+                >
+                    <p>{this.state.loadingText}</p>
+                </div>
 
                 <ToolButton
                     h={this.state.h / 15}

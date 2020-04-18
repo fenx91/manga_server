@@ -1,3 +1,8 @@
+@font-face {
+    font-family: "bignoodletoo";
+    src: url("/images/bignoodletoo.ttf");
+}
+
 .reader-background {
     margin: 0;
     background-color: rgb(47, 26, 54);
@@ -29,4 +34,13 @@
     -webkit-user-select: none;
     user-select: none;
     pointer-events: none;
+}
+
+.loading-text {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    font-family: 'bignoodletoo', cursive;
+    font-size: 2rem;
+    color: white;
 }

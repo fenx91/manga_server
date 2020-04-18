@@ -19,6 +19,11 @@ func GetStaticFileHandler(path string, dir string, allowRoot bool) func(http.Res
 			http.NotFound(w, r)
 			return
 		}
+		// simulates net delay.
+		/*if path == "/static/" {
+			num := 3000 + rand.Intn(2000)
+			time.Sleep(time.Duration(num) * time.Millisecond)
+		}*/
 		http.StripPrefix(path, http.FileServer(http.Dir(dir))).ServeHTTP(w, r)
 	}
 }

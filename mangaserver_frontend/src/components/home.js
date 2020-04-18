@@ -12,7 +12,7 @@ class Home extends Component {
   }
   
   componentDidMount() {
-    fetch(`http://localhost:80/api/mangalist`)
+    fetch(`/api/mangalist`)
       .then(res => res.json())
       .then(json => {
         const data = json.MangaDataList.map(mangadata => {
