@@ -2,9 +2,4 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-start;
-    margin-top: 10px;
-}
-
-.list-item {
-    margin-bottom: 20px;
 }

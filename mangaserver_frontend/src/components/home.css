@@ -8,13 +8,9 @@
     border-style: solid;
     border-color: rgb(78, 40, 122);
     border-width: 1px;
-    margin: 25px 20%;
-    padding: 25px 50px 50px 50px;
 }
 
 .section-text {
     font-family: 'bignoodletoo', cursive;
-    font-size: 3rem;
     color: rgb(78, 40, 122);
-    margin-bottom: 30px;
 }

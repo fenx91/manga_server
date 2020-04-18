@@ -11,11 +11,24 @@ class ImageCoverWithTitle extends React.Component {  // ICWT short for ImageCove
                         className="imagecover"
                         src={this.props.imgsrc}
                         alt="image cover"
-                        style={{width: this.props.imgwidth, height: this.props.imgheight}}
+                        style={{
+                            width: this.props.imgwidth + 'px',
+                            height: this.props.imgheight + 'px',
+                        }}
                     />
                 </Link>
-                <div className="titlediv" style={{width: this.props.imgwidth}}>
-                    <p className="titletext">{this.props.title}</p>
+                <div
+                    className="titlediv"
+                    style={{
+                        width: this.props.imgwidth + 'px',
+                        fontSize: this.props.textSize + 'px',
+                    }}
+                >
+                    <p
+                        className="titletext"
+                    >
+                        {this.props.title}
+                    </p>
                 </div>
             </div>
         )
