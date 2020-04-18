@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto&display=swap');
-
 .header {
     display: flex;
     justify-content: space-between;
@@ -11,12 +9,13 @@
 
 .logo-with-title {
     cursor: pointer;
-    height: 50px;
+    height: 45px;
     width: auto;
 }
  
 .nav-links {
     list-style: none;
+    display: none;
 }
 
 .nav-links li {
@@ -31,7 +30,7 @@
 
 .nav-links li a {
     transition: all 0.3s ease 0s;
-    font-family: 'Roboto', sans-serif;
+    font-family: sans-serif;
     font-weight: 400;
     font-size: 1rem;
     color: #edf0f1;

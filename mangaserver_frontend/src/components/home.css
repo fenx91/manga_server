@@ -1,5 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&display=swap');
-
+@font-face {
+    font-family: 'bignoodletoo';
+    src: url("/images/bignoodletoo.ttf");
+  }
 .manga-cover-list {
     background-color: rgb(255, 255, 255);
     border-style: solid;
@@ -10,8 +13,8 @@
 }
 
 .section-text {
-    font-family: 'Nanum Brush Script', cursive;
-    font-size: 4rem;
+    font-family: 'bignoodletoo', cursive;
+    font-size: 3rem;
     color: rgb(78, 40, 122);
     margin-bottom: 30px;
 }

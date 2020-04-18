@@ -1,0 +1,32 @@
+.reader-background {
+    margin: 0;
+    background-color: rgb(47, 26, 54);
+    position: relative;
+    overflow: hidden;
+}
+
+.left-click-receiver {
+    opacity: 0;
+    z-index: 2;
+    cursor: url('/images/cursor_l.png'), auto;
+}
+
+.right-click-receiver {
+    opacity: 0;
+    z-index: 2;
+    cursor: url('/images/cursor_r.png'), auto;
+}
+
+.left-canvas {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+}
+
+.right-canvas {
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    pointer-events: none;
+}

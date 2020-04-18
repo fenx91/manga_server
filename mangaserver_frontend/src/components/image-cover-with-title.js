@@ -6,7 +6,7 @@ class ImageCoverWithTitle extends React.Component {  // ICWT short for ImageCove
     render() {
         return (
             <div className="ICWT">
-                <Link to={this.props.linksto}>
+                <Link to={this.props.linksto} target={this.props.newTab ? "_blank" : ""}>
                     <img
                         className="imagecover"
                         src={this.props.imgsrc}

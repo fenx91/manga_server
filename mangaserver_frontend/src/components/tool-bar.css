@@ -1,0 +1,134 @@
+@font-face {
+  font-family: 'bignoodletoo';
+  src: url("/images/bignoodletoo.ttf");
+}
+
+.overall-tool-bar {
+    background: rgb(74, 59, 83);
+    position: absolute;
+    z-index: 3;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    opacity: 0.95;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    transition: all 0.2s ease 0s;
+}
+
+.toolbar-text {
+  font-family: 'bignoodletoo', cursive;
+  font-size: 1.5rem;
+}
+
+.page-number {
+  color: white;
+}
+
+.toolbar-link {
+  text-decoration: none;
+  color: white;
+}
+
+.toolbar-link:hover {
+  color: #fff5bc;
+}
+
+.chapter-list {
+  transition: all 0.3s ease 0s;
+  color: white;
+  cursor: pointer;
+}
+
+.chapter-list:hover {
+  color: #fff5bc;
+}
+
+#page-input-range {
+    width: 50%;
+}
+input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    margin: 7.5px 0;
+  }
+  input[type=range]:focus {
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 2px;
+    cursor: pointer;
+    box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
+    background: #ffffff;
+    border-radius: 0px;
+    border: 0px solid #010101;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0), 0px 0px 0px rgba(13, 13, 13, 0);
+    border: 1px solid #4e287a;
+    height: 17px;
+    width: 9px;
+    border-radius: 5px;
+    background: #ffffff;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -7.5px;
+  }
+  input[type=range]:focus::-webkit-slider-runnable-track {
+    background: #ffffff;
+  }
+  input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 2px;
+    cursor: pointer;
+    box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
+    background: #ffffff;
+    border-radius: 0px;
+    border: 0px solid #010101;
+  }
+  input[type=range]::-moz-range-thumb {
+    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0), 0px 0px 0px rgba(13, 13, 13, 0);
+    border: 1px solid #4e287a;
+    height: 17px;
+    width: 9px;
+    border-radius: 5px;
+    background: #ffffff;
+    cursor: pointer;
+  }
+  input[type=range]::-ms-track {
+    width: 100%;
+    height: 2px;
+    cursor: pointer;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+  }
+  input[type=range]::-ms-fill-lower {
+    background: #ffffff;
+    border: 0px solid #010101;
+    border-radius: 0px;
+    box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
+  }
+  input[type=range]::-ms-fill-upper {
+    background: #ffffff;
+    border: 0px solid #010101;
+    border-radius: 0px;
+    box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
+  }
+  input[type=range]::-ms-thumb {
+    box-shadow: 0px 0px 0px rgba(0, 0, 0, 0), 0px 0px 0px rgba(13, 13, 13, 0);
+    border: 1px solid #4e287a;
+    height: 17px;
+    width: 9px;
+    border-radius: 5px;
+    background: #ffffff;
+    cursor: pointer;
+    height: 2px;
+  }
+  input[type=range]:focus::-ms-fill-lower {
+    background: #ffffff;
+  }
+  input[type=range]:focus::-ms-fill-upper {
+    background: #ffffff;
+  }

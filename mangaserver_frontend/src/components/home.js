@@ -35,7 +35,7 @@ class Home extends Component {
         <div> <Topbar/> </div>
         <div className="manga-cover-list">
            <div className="section-text"><p>All Mangas</p></div>
-           <IcwtList icwtlist={this.state.icwt} imgheight="285px" imgwidth="435px" imgspace="35px"/>
+           <IcwtList icwtlist={this.state.icwt} imgheight="285px" imgwidth="435px" imgspace="35px" newTab={false}/>
         </div>
       </div>
     );

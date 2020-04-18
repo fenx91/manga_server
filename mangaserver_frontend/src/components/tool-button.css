@@ -1,0 +1,15 @@
+.tools-button-background {
+    background:rgb(74, 59, 83);
+    border-radius: 2000px;
+    cursor: pointer;
+    opacity: 0.95;
+    transition: all 0.2s ease 0s;
+    z-index: 3;
+}
+.tools-button {
+    padding: 0.4rem;
+    
+}
+.tools-button-background:hover {
+    filter: sepia(30%) brightness(110%)
+}

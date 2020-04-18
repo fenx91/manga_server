@@ -42,6 +42,7 @@ func main() {
 	http.HandleFunc("/images/", GetStaticFileHandler("/images/", "./mangaserver_frontend/images", false))
 	http.HandleFunc("/api/mangalist", ApiMangaListHandler)
 	http.HandleFunc("/api/mangainfo", ApiMangaInfoHandler)
+	http.HandleFunc("/api/chapterpagecount", ApiChapterPageCount)
 
 	fmt.Println("running server on localhost:80")
 	log.Fatal(http.ListenAndServe(":80", nil))

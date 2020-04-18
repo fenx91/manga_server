@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"log"
+	"manga_server/commonutil"
 	"manga_server/jwtutil"
 	"manga_server/mongoutil"
 	"net/http"
@@ -189,7 +190,6 @@ func LogOutHandler(w http.ResponseWriter, r *http.Request) {
 
 func GetStaticFileHandler(path string, dir string, allowRoot bool) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("entered handler" + path)
 		// Reject requests to directory if "allowRoot" is set to false.
 		if !allowRoot && strings.HasSuffix(r.URL.Path, "/") {
 			http.NotFound(w, r)
@@ -200,11 +200,11 @@ func GetStaticFileHandler(path string, dir string, allowRoot bool) func(http.Res
 }
 
 func RootHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("entered handler / with path:" + r.URL.Path)
 	http.StripPrefix(r.URL.Path, http.FileServer(http.Dir("./mangaserver_frontend/dist"))).
 		ServeHTTP(w, r)
 }
 
+// Deprecated.
 func MangaPageHandler(w http.ResponseWriter, r *http.Request) {
 	_, _, err := jwtutil.VerifyTokenAndGetUsername(r)
 
@@ -265,12 +265,6 @@ func ChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-
 	mangaId, err := strconv.Atoi(value[0])
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -326,11 +320,6 @@ func MobileChapterReaderHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chapterNos, ok := values["chapterno"]
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-
 	if !ok {
 		http.NotFound(w, r)
 		return
@@ -419,6 +408,88 @@ func ApiMangaInfoHandler(w http.ResponseWriter, r *http.Request) {
 	js, err := json.Marshal(mangaData)
 	if err != nil {
 		fmt.Println("js marshal manga info failed")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(js)
+}
+
+func ApiChapterPageCount(w http.ResponseWriter, r *http.Request) {
+	// Response Struct
+	type MangaChapterInfo struct {
+		ChapterNo int
+		PageCount int
+	}
+	type ApiChapterPageCountResponse struct {
+		MangaId              int
+		MangaTitle           string
+		MangaChapterInfoList []MangaChapterInfo
+	}
+	// Start extracting params.
+	values, _ := url.ParseQuery(r.URL.RawQuery)
+	// extract mangaId.
+	mangaIds, ok := values["mangaid"]
+	if !ok {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	mangaId, err := strconv.Atoi(mangaIds[0])
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	mangaData, err := mongoutil.GetMandaData(mangaId)
+	if err != nil {
+		log.Println("failed to get manga info for mangaId=" + string(mangaId) + " in mongodb.")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	mangaTitle := mangaData.MangaTitle
+	totalChapterCount := mangaData.ChapterCount
+
+	response := ApiChapterPageCountResponse{
+		MangaId:              mangaId,
+		MangaTitle:           mangaTitle,
+		MangaChapterInfoList: []MangaChapterInfo{},
+	}
+	// extract chapter no. if present.
+	chapterNos, chapterNoPresent := values["chapterno"]
+	if chapterNoPresent {
+		chapterNo, err := strconv.Atoi(chapterNos[0])
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		pageCount, err := commonutil.GetChapterPageCount(mangaTitle, chapterNo)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		chapterInfo := MangaChapterInfo{
+			ChapterNo: chapterNo,
+			PageCount: pageCount,
+		}
+		response.MangaChapterInfoList = append(response.MangaChapterInfoList, chapterInfo)
+	} else {
+		// if chapter no. not present, return info for all chapters.
+		for i := 1; i <= totalChapterCount; i++ {
+			pageCount, err := commonutil.GetChapterPageCount(mangaTitle, i)
+			if err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			chapterInfo := MangaChapterInfo{
+				ChapterNo: i,
+				PageCount: pageCount,
+			}
+			response.MangaChapterInfoList = append(response.MangaChapterInfoList, chapterInfo)
+		}
+	}
+
+	js, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("js marshal chapter info response failed")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

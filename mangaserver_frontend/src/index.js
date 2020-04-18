@@ -3,6 +3,8 @@ import ReactDOM from "react-dom";
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom'
 import Home from './components/home.js'
 import MangaPage from './components/manga-page.js'
+import Reader from './components/reader.js'
+import NotFoundPage from './components/not-found-page.js'
 import "./index.css"
 
 class App extends React.Component {
@@ -12,17 +14,13 @@ class App extends React.Component {
       <Switch>
         <Route path="/" exact component={Home}/>
         <Route path="/mangapage/:mangaid" component={MangaPage}/>
+        <Route path="/reader/:mangaid/:chapterno" component={Reader}/>
+        <Route component={NotFoundPage}/>
       </Switch>
     </Router>
     );
   }
 }
-//{this.props.children}
+
 const wrapper = document.getElementById("container");
 wrapper ? ReactDOM.render(<App/>, wrapper) : false;
-
-/*
-
-    <Route path="home" component={Home} />
-    <Route path="mangapage" component={MangaPage}/>
-*/

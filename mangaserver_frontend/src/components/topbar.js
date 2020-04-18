@@ -6,7 +6,7 @@ const Topbar = () => {
     return (
     <div className="header">
         <Link to="/">
-            <img className="logo-with-title" src="/images/dbwhitewithtitle.png" arl="logo"></img>
+            <img className="logo-with-title" src="/images/dragonblade-title-2.png" arl="logo"></img>
         </Link>
         <div>
             <ul className="nav-links">

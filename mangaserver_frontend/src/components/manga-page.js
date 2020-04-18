@@ -8,46 +8,25 @@ class MangaPage extends Component {
   constructor() {
     super();
     this.state = {
-      //icwt: [],
-      icwt: [{
-        imgsrc: "/images/10_000.jpg",
-        title: "aaa",
-      },{
-        imgsrc: "/images/10_000.jpg",
-        title: "aaa",
-      },{
-        imgsrc: "/images/10_000.jpg",
-        title: "aaa",
-      },{
-        imgsrc: "/images/10_000.jpg",
-        title: "aaa",
-      },{
-        imgsrc: "/images/10_000.jpg",
-        title: "aaa",
-      },{
-        imgsrc: "/images/10_000.jpg",
-        title: "aaa",
-      },{
-        imgsrc: "/images/10_000.jpg",
-        title: "aaa",
-      },],
+      icwt: [],
       mangatitle: "",
     }
   }
   
   componentDidMount() {
-    fetch(`http://localhost:80/api/mangainfo?mangaid=${this.props.match.params.mangaid}`)
+    fetch(`/api/mangainfo?mangaid=${this.props.match.params.mangaid}`)
     .then(res => res.json())
     .then((json) => {
+      console.log(json);
       const icwt = [];
       let i = 1;
-      for (i = 1; i < json.ChapterCount; i++) {
+      for (i = 1; i <= json.ChapterCount; i++) {
         const formattedIndex = ("0" + i).slice(-2);
         icwt.push({
           key: i,
           imgsrc: "/static/manga/" + json.MangaTitle + "/" + formattedIndex + "/" + formattedIndex + "_000.jpg",
           title: "第" + formattedIndex + "卷",
-          link: "/",
+          link: `/reader/${this.props.match.params.mangaid}/${i}`,
         })
       }
       this.setState({
@@ -73,7 +52,7 @@ class MangaPage extends Component {
             />
           </div>
           <div className="chapter-cover-list">
-            <IcwtList icwtlist={this.state.icwt} imgwidth="200px" imgheight="300px" imgspace="20px"/>
+            <IcwtList icwtlist={this.state.icwt} imgwidth="200px" imgheight="300px" imgspace="20px" newTab={true}/>
           </div>          
         </div>
       </div>
