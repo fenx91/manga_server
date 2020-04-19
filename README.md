@@ -1,4 +1,5 @@
 # manga_server
+*Last update: 2020-04-19*
 
 This is a very simple manga website built with Go (backend) + React (frontend) + 
 MongoDB (database). Suits for beginners in these areas to get started.
