@@ -94,4 +94,13 @@ Simply run
 ./manga_server --dbUsername=<db_username> --dbPassword=<db_password>
 ```
 where `<db_username>` and `<db_password>` represents the user credentials you set up in
-[section 1](#enable-access-control-in-mongodb). 
+section [Enable Access Control in MongoDB](#enable-access-control-in-mongodb). 
+
+Now you can visit `http://localhost` to see the website.
+
+# WIP Features
+1.  Optimizing for mobile browsers.
+1.  Preloading next pages.
+1.  User login & manga comment section.
+1.  Request manga survey. 
+1.  Manga feature images gallery.
