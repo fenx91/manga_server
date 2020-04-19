@@ -32,8 +32,7 @@
   },
   "scripts": {
     "build": "webpack --mode development",
-    "buildprod": "webpack --mode production",
-    "start": "webpack-dev-server --open --mode development"
+    "buildprod": "webpack --mode production"
   },
   "keywords": [],
   "author": "",

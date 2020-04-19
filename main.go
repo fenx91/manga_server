@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt" // TODO: log stuff instead of print.
 	"log"
-	"manga_server/jwtutil"
 	"manga_server/mongoutil"
 	"net/http"
 )
@@ -14,12 +13,12 @@ func main() {
 	dbUsername := flag.String("dbUsername", "default", "Database username.")
 	dbPassword := flag.String("dbPassword", "default", "Database password.")
 	// jwt secret not being used right now due to the disabling of login/signup functionality.
-	jwtSecret := flag.String("jwtSecret", "default", "Secret used in JWT token.")
+	// jwtSecret := flag.String("jwtSecret", "default", "Secret used in JWT token.")
 	flag.Parse()
-	if *jwtSecret == "default" || *dbUsername == "default" || *dbPassword == "default" {
+	if /* *jwtSecret == "default" ||*/ *dbUsername == "default" || *dbPassword == "default" {
 		log.Fatal("Did you set cmd line flags?")
 	}
-	jwtutil.Secret = []byte(*jwtSecret)
+	//jwtutil.Secret = []byte(*jwtSecret)
 
 	// Initialization
 	dbErr := mongoutil.Init(*dbUsername, *dbPassword)
